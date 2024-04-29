@@ -15,14 +15,23 @@ if not os.path.exists("audio_samples"):
     os.makedirs("audio_samples")
 
 
-def record_audio(record_seconds=5) -> str:
+def record_audio(record_seconds: int = 5) -> str:
+    """Records audio and stores it in a WAV file
+
+    Args:
+        record_seconds (int, optional): the number of seconds to record for.
+        Defaults to 5.
+
+    Returns:
+        str: filename of temporary WAV file
+    """
     audio = pyaudio.PyAudio()
 
     # Start recording
     stream = audio.open(
         format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK
     )
-    
+
     print("Recording...")
 
     frames = []

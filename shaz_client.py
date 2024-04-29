@@ -5,10 +5,11 @@ from PIL import ImageTk, Image
 from tkinter import Tk, Button
 import io
 import os
-from typing import Iterable
+from typing import Iterable, Union
 from audio_recorder import record_audio
 
 def call_server():
+    """Wraps asynchronous method to allow interoperability with Tkinter"""
     asyncio.run(connect())
     
 root = Tk()
@@ -22,13 +23,11 @@ right_frame.grid(row=0, column=1)
 
 canvas = Canvas(left_frame, width=400, height=400, bg='white')
 canvas.pack()
-#canv.grid(row=2, column=3)
 
 song_text_var = StringVar()
 artist_text_var = StringVar()
 album_text_var = StringVar()
 release_text_var = StringVar()
-
 
 song_label = Label(right_frame, textvariable=song_text_var, font="Helvetica 18")
 song_label.place(relx=.5, rely=.3, anchor=CENTER)
@@ -60,7 +59,16 @@ displayed_image = ImageTk.PhotoImage(Image.open("resource/start.png"))
 error_image = Image.open("resource/error.png")
 image_container = canvas.create_image(0, 0, anchor=NW, image=displayed_image)
 
-def parse_response(response_bytes):
+def parse_response(response_bytes: bytes) -> Union[bytes, bytes]:
+    """Performs extraction of metadata and image bytes from full byte string
+
+    Args:
+        response_bytes (bytes): full byte string
+
+    Returns:
+        Union[bytes, bytes]: image bytes and metadata bytes
+    """
+    
     # Metadata length header is the first 2 bytes
     metadata_size = int.from_bytes(response_bytes[:2], byteorder="big")
     meta_bytes = response_bytes[2:metadata_size+2].decode()
@@ -70,17 +78,30 @@ def parse_response(response_bytes):
     return image_bytes, metadata_list
 
 def update_labels(metadata_list: Iterable[str]):
+    """Updates labels using metadata information
+
+    Args:
+        metadata_list (Iterable[str]): list of metadata items
+    """
     song_text_var.set(metadata_list[0])
     artist_text_var.set(metadata_list[1])
     album_text_var.set(metadata_list[2])
     release_text_var.set(metadata_list[3])
    
-def update_canvas(new_image):
+def update_canvas(new_image: Image.Image):
+    """Updates canvas object with new image file
+
+    Args:
+        new_image (Image.Image): PIL representation
+    """
     displayed_image = ImageTk.PhotoImage(new_image)
     canvas.itemconfig(image_container, image=displayed_image)
     canvas.imgref = displayed_image
     
 async def connect():
+    """Responsible for connection to server, and performing all tasks related to
+    preparing message and handling response
+    """
     reader, writer = await asyncio.open_connection(
         '192.168.1.10', 8000)
     
@@ -110,9 +131,8 @@ async def connect():
         
     else:
         update_canvas(error_image)
-        
-   
+  
     writer.close()
     await writer.wait_closed()
 
-root.mainloop()
+root.mainloop() # Main Tkinter loop
