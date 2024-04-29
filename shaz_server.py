@@ -1,5 +1,4 @@
 import asyncio
-import time
 import socket
 import requests
 import logging
@@ -29,7 +28,7 @@ async def perform_lookup(audio_bytes: bytes) -> bytes:
     shazam = Shazam()
 
     response: dict = await shazam.recognize(audio_bytes)
-    
+
     # Extraction
 
     image_url = ""
@@ -56,7 +55,7 @@ async def perform_lookup(audio_bytes: bytes) -> bytes:
                         album_name = metadata["text"]
                     elif metadata["title"] == "Released":
                         release_year = metadata["text"]
-                        
+
         # Formatting
         meta_bytes = "\n".join(
             [song_name, artist_name, album_name, release_year]
